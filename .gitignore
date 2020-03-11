@@ -50,3 +50,7 @@ venv
 
 # Python Cache
 __pycache__
+
+/data/*
+!/data
+!/data/raw
