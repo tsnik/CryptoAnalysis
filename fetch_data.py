@@ -11,6 +11,7 @@ dfs = {}
 for ticker in tickers:
     klines = client.get_historical_klines(ticker, Client.KLINE_INTERVAL_1DAY, "1 Jan, 2015", "1 Jan, 2020")
     klines = [{"Open": float(c[1]), "High": float(c[2]), "Low": float(c[3]), "Close": float(c[4]),
+               "Volume": float(c[5]), "Trades": int(c[8]), "VolumeQ": float(c[7]),
                "OpenTime": datetime.utcfromtimestamp(c[0]/1000)} for c in klines]
     print(klines)
     dfs[ticker] = pd.DataFrame(klines)
