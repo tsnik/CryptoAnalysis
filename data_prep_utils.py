@@ -5,11 +5,18 @@ from spread_func import ARAMonthlyCorrected, ARATwoDayCorrected, ROLLTwoDayCorre
 from utils import month_conv, gtrend_conv, add_months, logarize, find_first_day, find_next_month
 
 
-def google_trend(file, outputfile):
-    g_trends = pd.read_csv(file, converters={1: gtrend_conv}, parse_dates=True,
-                           date_parser=month_conv, index_col="Month")
+def google_trend(files, outputfile):
+    if type(files) is not list:
+        files = [files]
+    dfs = {}
+    for file in files:
+        g_trends = pd.read_csv(file, converters={1: gtrend_conv}, parse_dates=True,
+                               date_parser=month_conv, index_col="Month")
+        name = file.split("\\")[-1][1:].split('_')[0]
+        dfs[name] = g_trends
     with pd.ExcelWriter(outputfile) as writer:
-        g_trends.to_excel(writer)
+        for df in dfs:
+            dfs[df].to_excel(writer, sheet_name=df)
 
 
 def spread_calc(df, outfile):
