@@ -54,3 +54,5 @@ __pycache__
 /data/*
 !/data
 !/data/raw
+/data/raw/BitFinex.xlsx
+/images
