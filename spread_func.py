@@ -15,8 +15,9 @@ def ARATwoDayCorrected(month):
     close_l = month['CloseL']
     two_days = (close_l - mid_range) * (close_l - mid_range.shift(-1))
     two_days[two_days < 0] = 0
+    two_days = np.sqrt(two_days * 4)
     summm = np.sum(two_days)
-    s = np.sqrt(summm * 4 / (len(mid_range) - 1))
+    s = summm / (len(mid_range) - 1)
     return s
 
 
@@ -51,3 +52,12 @@ def ROLLTwoDayCorrected(month):
     summm = np.sum(two_days)
     s = np.sqrt(summm * 4 / (len(close) - 1))
     return s
+
+
+def amihud(month):
+    close = month["Close"]
+    returns = close / close.shift() - 1
+    returns = returns[1:]
+    month = month[1:]
+    returns = returns.abs() * month["Volume"]
+    return returns.sum() / len(returns)
