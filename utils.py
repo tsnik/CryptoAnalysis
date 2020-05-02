@@ -1,7 +1,14 @@
 import datetime
 import calendar
+import time
+
 import numpy as np
 import statsmodels.api as sm
+import pandas as pd
+import numpy.linalg as la
+from scipy import stats
+from pytrends.request import TrendReq
+
 
 def add_months(sourcedate, months):
     month = sourcedate.month - 1 + months
@@ -12,8 +19,13 @@ def add_months(sourcedate, months):
 
 
 def month_conv(value):
-    year, month = value.split('-')
-    return datetime.date(int(year), int(month), 1)
+    tmp = value.split('-')
+    if len(tmp) == 3:
+        year, month, day = tmp
+        return datetime.date(int(year), int(month), int(day))
+    else:
+        year, month = tmp
+        return datetime.date(int(year), int(month), 1)
 
 
 def gtrend_conv(value):
@@ -30,17 +42,28 @@ def logarize(df):
     return df
 
 
-def find_first_day(index):
-    for ind in index:
-        if ind.day <= 4:
-            return ind
+def find_first_day(index, hour=False):
+    if hour:
+        for ind in index:
+            if ind.hour == 0:
+                return ind
+    else:
+        for ind in index:
+            if ind.day <= 4:
+                return ind
 
 
-def find_next_month(index):
-    month = index[0].month
-    for ind in index:
-        if ind.month != month:
-            return ind
+def find_next_month(index, hour=False):
+    if hour:
+        day = index[0].day
+        for ind in index:
+            if ind.day != day:
+                return ind
+    else:
+        month = index[0].month
+        for ind in index:
+            if ind.month != month:
+                return ind
 
 
 def diff_and_lag(df):
