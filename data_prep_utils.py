@@ -56,3 +56,26 @@ def spread_calc(dfs, outfile, hour=False):
     with pd.ExcelWriter(outfile) as writer:
         for k, r in res.items():
             r.to_excel(writer, sheet_name=k)
+
+
+def coins_number(files, outputfile):
+    if type(files) is not list:
+        files = [files]
+    dfs = {}
+    for file in files:
+        coins = pd.read_csv(file, parse_dates=True,
+                            date_parser=month_conv, index_col="Month")
+        name = file.split("\\")[-1][:-9]
+        coins = coins.loc[~coins.index.duplicated(keep="last")]
+        dfs[name] = coins
+    with pd.ExcelWriter(outputfile) as writer:
+        for df in dfs:
+            dfs[df].to_excel(writer, sheet_name=df)
+
+
+def spread(dfs, outputfile):
+    with pd.ExcelWriter(outputfile) as writer:
+        for k in dfs:
+            dfs[k]["Spread"] = dfs[k]["PX_ASK"] / dfs[k]["PX_BID"]
+            dfs[k]["Spread"][dfs[k]["Spread"] < 1] = 1
+            dfs[k].to_excel(writer, sheet_name=k)
