@@ -61,9 +61,11 @@ def find_next_month(index, hour=False):
                 return ind
     else:
         month = index[0].month
+        ind = None
         for ind in index:
             if ind.month != month:
                 return ind
+        return ind
 
 
 def diff_and_lag(df):

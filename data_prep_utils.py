@@ -1,7 +1,8 @@
 import pandas as pd
 import numpy as np
 
-from spread_func import ARAMonthlyCorrected, ARATwoDayCorrected, ROLLTwoDayCorrected, ROLLMonthlyCorrectedManual, amihud
+from spread_func import ARAMonthlyCorrected, ARATwoDayCorrected, ROLLTwoDayCorrected, ROLLMonthlyCorrectedManual, \
+    amihud, ROLLMonthlyCorrected
 from utils import month_conv, gtrend_conv, add_months, logarize, find_first_day, find_next_month
 
 
@@ -44,7 +45,7 @@ def spread_calc(dfs, outfile, hour=False):
                             "Amihud": amihud(month),
                             "Volume": np.sum(month["Volume"][:-1]),
                             "Return": month.iloc[-2]["Close"] / month.iloc[0]["Close"],
-                            "Open": month.iloc[0]["Open"], "Close": month.iloc[-2]["Close"],
+                            "Close": month.iloc[-2]["Close"],
                             "MidPrice": (month.iloc[-2]["Close"] + month.iloc[0]["Close"]) / 2,
                             })
             start = end
@@ -77,5 +78,6 @@ def spread(dfs, outputfile):
     with pd.ExcelWriter(outputfile) as writer:
         for k in dfs:
             dfs[k]["Spread"] = dfs[k]["PX_ASK"] / dfs[k]["PX_BID"]
-            dfs[k]["Spread"][dfs[k]["Spread"] < 1] = 1
+            dfs[k].loc[dfs[k]["Spread"] < 1, "Spread"] = 1
+            dfs[k] = dfs[k][["Spread"]]
             dfs[k].to_excel(writer, sheet_name=k)

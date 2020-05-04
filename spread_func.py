@@ -24,7 +24,7 @@ def ARATwoDayCorrected(month):
 def ROLLMonthlyCorrected(month):
     close = month["Close"]
     returns = close / close.shift()
-    s = 4 * returns.autocorr() * returns.var()
+    s = 4 * -returns.autocorr() * returns.var()
     s = max([s, 0])
     s = np.sqrt(s)
     s2 = ROLLMonthlyCorrectedManual(month)
@@ -35,22 +35,25 @@ def ROLLMonthlyCorrected(month):
 def ROLLMonthlyCorrectedManual(month):
     close = month["Close"]
     returns = close / close.shift()
+    returns.dropna(inplace=True)
     returns_m = returns.mean()
-    s = np.sum((returns - returns_m) * (returns.shift() - returns_m))
-    s = s * 4 / (len(close) - 2)
-    s = max([s, 0])
-    s = np.sqrt(s)
+    returns_ms = returns.shift().mean()
+    s = np.sum((returns[1:] - returns_m) * (returns.shift()[1:] - returns_ms))
+    s = s / (len(returns) - 1)
+    s = max([-s, 0])
+    s = 2 * np.sqrt(s)
     return s
 
 
 def ROLLTwoDayCorrected(month):
     close = month["Close"]
     returns = close / close.shift()
+    returns.dropna(inplace=True)
     returns_m = returns.mean()
     two_days = (returns - returns_m) * (returns.shift(-1) - returns_m)
-    two_days[two_days < 0] = 0
+    two_days[two_days > 0] = 0
     summm = np.sum(two_days)
-    s = np.sqrt(summm * 4 / (len(close) - 1))
+    s = 2 * np.sqrt(-summm / (len(close) - 1))
     return s
 
 
