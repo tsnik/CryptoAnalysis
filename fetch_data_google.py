@@ -17,9 +17,7 @@ with pd.ExcelWriter("data\\GoogleTrendsAdj2_d.xlsx") as writer:
         ts, k = convert_trend(ts, c, "Bitcoin", "Monero", reserve_k)
         if c == "Monero":
             reserve_k = k
-        #ts = convert_trend(ts, "Monero", "Bitcoin")
         df = pd.DataFrame({"GoogleTrend": ts}, index=ts.index)
-        #df = df.round(4)
         df.to_excel(writer, sheet_name=c)
 
 

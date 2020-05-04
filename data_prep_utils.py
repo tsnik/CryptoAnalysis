@@ -1,9 +1,11 @@
+import time
+
 import pandas as pd
 import numpy as np
 
 from spread_func import ARAMonthlyCorrected, ARATwoDayCorrected, ROLLTwoDayCorrected, ROLLMonthlyCorrectedManual, \
-    amihud, ROLLMonthlyCorrected
-from utils import month_conv, gtrend_conv, add_months, logarize, find_first_day, find_next_month
+    amihud, ROLLMonthlyCorrected, crsp
+from utils import month_conv, gtrend_conv, add_months, logarize, find_first_day, find_next_month, get_google_trend_month
 
 
 def google_trend(files, outputfile):
@@ -38,7 +40,7 @@ def spread_calc(dfs, outfile, hour=False):
             m = start
             if not hour:
                 m = start.replace(day=1)
-            results.append({"Month": m, "MonthlyCorrected": np.exp(ARAMonthlyCorrected(month)),
+            tmp = {"Month": m, "MonthlyCorrected": np.exp(ARAMonthlyCorrected(month)),
                             "TwoDayCorrected": np.exp(ARATwoDayCorrected(month)),
                             "ROLLMonthlyCorrected": 1 + ROLLMonthlyCorrectedManual(month),
                             "ROLLTwoDayCorrected": 1 + ROLLTwoDayCorrected(month),
@@ -47,7 +49,10 @@ def spread_calc(dfs, outfile, hour=False):
                             "Return": month.iloc[-2]["Close"] / month.iloc[0]["Close"],
                             "Close": month.iloc[-2]["Close"],
                             "MidPrice": (month.iloc[-2]["Close"] + month.iloc[0]["Close"]) / 2,
-                            })
+                   }
+            if "PX_ASK" in month.columns:
+                tmp["CRSP"] = crsp(month)
+            results.append(tmp)
             start = end
 
         res_t = pd.DataFrame(results)
@@ -81,3 +86,11 @@ def spread(dfs, outputfile):
             dfs[k].loc[dfs[k]["Spread"] < 1, "Spread"] = 1
             dfs[k] = dfs[k][["Spread"]]
             dfs[k].to_excel(writer, sheet_name=k)
+
+
+def google_trend_all(dfs, outputfile):
+    with pd.ExcelWriter(outputfile) as writer:
+        for k in dfs:
+            time.sleep(1)
+            df = get_google_trend_month(k)
+            df.to_excel(writer, sheet_name=k)

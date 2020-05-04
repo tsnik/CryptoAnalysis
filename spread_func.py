@@ -64,3 +64,10 @@ def amihud(month):
     month = month[1:]
     returns = returns.abs() * month["Volume"]
     return returns.sum() / len(returns)
+
+
+def crsp(month):
+    spread = month["PX_ASK"] / month["PX_BID"]
+    spread.loc[spread < 1] = 1
+    spread = spread.mean()
+    return spread

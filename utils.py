@@ -209,3 +209,11 @@ def hausman(fe, re):
     pval = stats.chi2.sf(chi2, df)
 
     return chi2, df, pval
+
+
+def get_google_trend_month(topic):
+    pytrends = TrendReq(hl='en-US', tz=0)
+    kw_list = [topic]
+    pytrends.build_payload(kw_list, timeframe="all")
+    df = pytrends.interest_over_time()
+    return df
