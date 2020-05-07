@@ -67,7 +67,8 @@ def amihud(month):
 
 
 def crsp(month):
-    spread = month["PX_ASK"] / month["PX_BID"]
-    spread.loc[spread < 1] = 1
+    spread = month["PX_ASK"] - month["PX_BID"]
+    spread = 2 * spread / (month["PX_ASK"] + month["PX_BID"])
+    spread.loc[spread < 0] = 0
     spread = spread.mean()
     return spread

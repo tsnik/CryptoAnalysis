@@ -216,4 +216,4 @@ def get_google_trend_month(topic):
     kw_list = [topic]
     pytrends.build_payload(kw_list, timeframe="all")
     df = pytrends.interest_over_time()
-    return df
+    return pd.DataFrame({"GoogleTrend": df[topic]})
