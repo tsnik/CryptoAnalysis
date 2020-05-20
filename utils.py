@@ -212,8 +212,16 @@ def hausman(fe, re):
 
 
 def get_google_trend_month(topic):
-    pytrends = TrendReq(hl='en-US', tz=0)
     kw_list = [topic]
-    pytrends.build_payload(kw_list, timeframe="all")
+    if type(topic) is list:
+        kw_list = topic
+    kw_list = [topic + " coin"for topic in kw_list]
+    pytrends = TrendReq(hl='en-US', tz=0)
+    pytrends.build_payload(kw_list, timeframe="2012-01-01 2020-05-1")
     df = pytrends.interest_over_time()
+    if type(topic) is list:
+        d = {}
+        for t in topic:
+            d[t] = pd.DataFrame({"GoogleTrend": df[t + " coin"]})
+        return d
     return pd.DataFrame({"GoogleTrend": df[topic]})

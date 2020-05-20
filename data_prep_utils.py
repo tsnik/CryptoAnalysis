@@ -92,7 +92,34 @@ def spread(dfs, outputfile):
 
 def google_trend_all(dfs, outputfile):
     with pd.ExcelWriter(outputfile) as writer:
-        for k in dfs:
+        trends = {}
+        keys = list(dfs.keys())
+        last = None
+        while len(keys) > 0:
+            if last is None:
+                topics = keys[:2]
+                keys = keys[2:]
+            else:
+                topics = keys[:1]
+                keys = keys[1:]
+                topics.append(last)
             time.sleep(1)
-            df = get_google_trend_month(k)
+            tmp = get_google_trend_month(topics)
+            if last is not None:
+                ratio = trends[last]["GoogleTrend"].mean() / tmp[last]["GoogleTrend"].mean()
+                for k in tmp.keys():
+                    if k == last:
+                        continue
+                    tmp[k]["GoogleTrend"] = tmp[k]["GoogleTrend"] * ratio
+                    trends[k] = tmp[k]
+            else:
+                trends = tmp
+            last = list(tmp.keys())[-1]
+            for k in trends:
+                if trends[k]["GoogleTrend"].mean() < trends[last]["GoogleTrend"].mean():
+                    last = k
+        for k in trends:
+            df = trends[k]
+            df[df["GoogleTrend"] == 0] = None
+            df.fillna(method="ffill", inplace=True)
             df.to_excel(writer, sheet_name=k)
