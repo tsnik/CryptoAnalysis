@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 from spread_func import ARAMonthlyCorrected, ARATwoDayCorrected, ROLLTwoDayCorrected, ROLLMonthlyCorrectedManual, \
-    amihud, ROLLMonthlyCorrected, crsp
+    amihud, ROLLMonthlyCorrected, crsp, HL
 from utils import month_conv, gtrend_conv, add_months, logarize, find_first_day, find_next_month, get_google_trend_month
 
 
@@ -40,17 +40,19 @@ def spread_calc(dfs, outfile, hour=False):
             m = start
             if not hour:
                 m = start.replace(day=1)
-            tmp = {"Month": m, "MonthlyCorrected": np.exp(ARAMonthlyCorrected(month)),
-                            "TwoDayCorrected": np.exp(ARATwoDayCorrected(month)),
-                            "ROLLMonthlyCorrected": 1 + ROLLMonthlyCorrectedManual(month),
-                            "ROLLTwoDayCorrected": 1 + ROLLTwoDayCorrected(month),
-                            "Amihud": amihud(month),
-                            "Volume": np.sum(month["Volume"][:-1]),
-                            "Return": month.iloc[-2]["Close"] / month.iloc[0]["Close"],
-                            "Close": month.iloc[-2]["Close"],
-                            "MidPrice": (month.iloc[-2]["Close"] + month.iloc[0]["Close"]) / 2,
+            tmp = {"Month": m, "MonthlyCorrected": ARAMonthlyCorrected(month),
+                   "TwoDayCorrected": ARATwoDayCorrected(month),
+                   "RollMonthlyCorrected": ROLLMonthlyCorrectedManual(month),
+                   "HL": HL(month),
+                   "Amihud": amihud(month),
+                   "Volume": np.sum(month["Volume"][:-1]),
+                   "VolumeUSD": np.sum((month["Volume"]*month["Close"])[:-1]),
+                   "Return": month.iloc[-2]["Close"] / month.iloc[0]["Close"],
+                   "Close": month.iloc[-2]["Close"],
+                   "MidPrice": (month.iloc[-2]["Close"] + month.iloc[0]["Close"]) / 2,
                    }
-            if "PX_ASK" in month.columns:
+            month = month.dropna()
+            if "PX_ASK" in month.columns and len(month) > 15:
                 tmp["CRSP"] = crsp(month)
             results.append(tmp)
             start = end

@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def ARAMonthlyCorrected(month):
@@ -11,14 +12,36 @@ def ARAMonthlyCorrected(month):
 
 
 def ARATwoDayCorrected(month):
-    mid_range = month['MidRange']
-    close_l = month['CloseL']
-    two_days = (close_l - mid_range) * (close_l - mid_range.shift(-1))
+    mid_range = month['MidRange'][:-1]
+    mid_range1 = month['MidRange'].shift(-1)[:-1]
+    close_l = month['CloseL'][:-1]
+    two_days = (close_l - mid_range) * (close_l - mid_range1)
     two_days[two_days < 0] = 0
+    two_days.dropna(inplace=True)
     two_days = np.sqrt(two_days * 4)
     summm = np.sum(two_days)
-    s = summm / (len(mid_range) - 1)
+    s = summm / len(two_days)
     return s
+
+
+def HL(month):
+    ht = month["HighL"][:-1]
+    ht1 = month["HighL"].shift(-1)[:-1]
+    lt = month["LowL"][:-1]
+    lt1 = month["LowL"].shift(-1)[:-1]
+    ct = month["CloseL"][:-1]
+    ht1[lt1 > ct] = ht1 - (lt1 - ct)
+    lt1[lt1 > ct] = lt1 - (lt1 - ct)
+    ht1[ht1 < ct] = ht1 + (ct - ht1)
+    lt1[ht1 < ct] = lt1 + (ct - ht1)
+    hm = pd.concat([ht, ht1], axis=1).max(axis=1)
+    lm = pd.concat([lt, lt1], axis=1).min(axis=1)
+    y = np.power(hm - lm, 2)
+    b = (np.power(ht1 - lt1, 2) + np.power(ht - lt, 2))
+    a = ((np.sqrt(2 * b) - np.sqrt(b)) / (3 - 2 * np.sqrt(2))) - np.sqrt(y / (3 - 2 * np.sqrt(2)))
+    s = 2 * (np.exp(a) - 1) / (1 + np.exp(a))
+    s[s < 0] = 0
+    return np.sum(s) / len(s)
 
 
 def ROLLMonthlyCorrected(month):
