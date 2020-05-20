@@ -6,6 +6,7 @@ import numpy as np
 import statsmodels.api as sm
 import pandas as pd
 import numpy.linalg as la
+from linearmodels import FamaMacBeth
 from scipy import stats
 from pytrends.request import TrendReq
 
@@ -69,10 +70,13 @@ def find_next_month(index, hour=False):
 
 
 def diff_and_lag(df):
-    df = df.join(np.log(df), rsuffix="Log")
     df = df.join(df.diff(), rsuffix="Diff")[1:]
-    #df["GoogleTrendS"] = np.power(df["GoogleTrend"], 2)
     return df.join(df.shift(), rsuffix="Lag")[1:]
+
+
+def log(df, names):
+    for name in names:
+        df[name+"Log"] = np.log(df[name])
 
 
 def compare_two_exchanges(df1, df2, y, x):
@@ -225,3 +229,39 @@ def get_google_trend_month(topic):
             d[t] = pd.DataFrame({"GoogleTrend": df[t + " coin"]})
         return d
     return pd.DataFrame({"GoogleTrend": df[topic]})
+
+
+def create_panel_data(dfs):
+    df = None
+    first_date = None
+    for k in dfs:
+        tmp = dfs[k]
+        tmp["Currency"] = k
+        tmp.reset_index(inplace=True)
+        tmp.dropna(inplace=True)
+        tmp = sm.tsa.add_trend(tmp, trend="ct")
+        tmp["const"] = 1
+        if first_date is None or first_date < tmp.iloc[0]["Month"]:
+            first_date = tmp.iloc[0]["Month"]
+        if df is None:
+            df = tmp
+            continue
+        df = df.append(tmp)
+
+    indexNames = df[df['Month'] < first_date].index
+    df.drop(indexNames, inplace=True)
+
+    df.set_index(["Currency", "Month"], inplace=True)
+    df.sort_index(level=['Currency', 'Month'], ascending=True, inplace=True)
+
+    return df
+
+
+def check_volume(df, spread):
+    df["VolumeBLNS"] = df["Volume"] / 1000 / 1000 / 1000
+    y = df[spread] * 100
+    X = df[["const", "VolumeBLNS"]]
+
+    modfb = FamaMacBeth(y, X)
+    resfb = modfb.fit(cov_type="robust")
+    return resfb
