@@ -44,16 +44,18 @@ def spread_calc(dfs, outfile, hour=False):
                    "TwoDayCorrected": ARATwoDayCorrected(month),
                    "RollMonthlyCorrected": ROLLMonthlyCorrectedManual(month),
                    "HL": HL(month),
-                   "Amihud": amihud(month),
-                   "Volume": np.sum(month["Volume"][:-1]),
-                   "VolumeUSD": np.sum((month["Volume"]*month["Close"])[:-1]),
-                   "Return": month.iloc[-2]["Close"] / month.iloc[0]["Close"],
+                   "Return": month.iloc[-1]["Close"] / month.iloc[0]["Close"],
+                   "ReturnAvg": (month["Close"] / month["Close"].shift())[:-2].mean(),
                    "Close": month.iloc[-2]["Close"],
                    "MidPrice": (month.iloc[-2]["Close"] + month.iloc[0]["Close"]) / 2,
                    }
             month = month.dropna()
             if "PX_ASK" in month.columns and len(month) > 15:
                 tmp["CRSP"] = crsp(month)
+            if "Volume" in month.columns:
+                tmp["Amihud"] = amihud(month)
+                tmp["Volume"] = np.sum(month["Volume"][:-1])
+                tmp["VolumeUSD"] = np.sum((month["Volume"] * month["Close"])[:-1])
             results.append(tmp)
             start = end
 
@@ -120,6 +122,16 @@ def google_trend_all(dfs, outputfile):
                     last = k
         for k in trends:
             df = trends[k]
+            df[df["GoogleTrend"] == 0] = None
+            df.fillna(method="ffill", inplace=True)
+            df.to_excel(writer, sheet_name=k)
+
+
+def google_trend_all_separate(dfs, outputfile):
+    with pd.ExcelWriter(outputfile) as writer:
+        for k in dfs:
+            time.sleep(1)
+            df = get_google_trend_month(k)
             df[df["GoogleTrend"] == 0] = None
             df.fillna(method="ffill", inplace=True)
             df.to_excel(writer, sheet_name=k)
