@@ -9,3 +9,6 @@ matplotlib>=3.2.0
 linearmodels>=4.17
 bitfinex-v2>=1.7.1
 pytrends>=4.7.2
+arch
+PyPortfolioOpt>=1.2.3
+
