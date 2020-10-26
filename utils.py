@@ -228,7 +228,7 @@ def get_google_trend_month(topic):
         for t in topic:
             d[t] = pd.DataFrame({"GoogleTrend": df[t + " coin"]})
         return d
-    return pd.DataFrame({"GoogleTrend": df[topic]})
+    return pd.DataFrame({"GoogleTrend": df[topic + " coin"]})
 
 
 def create_panel_data(dfs):
