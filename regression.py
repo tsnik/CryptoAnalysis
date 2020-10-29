@@ -11,15 +11,16 @@ import datetime
 from utils import diff_and_lag, log
 
 
-name = "Litecoin"
 dfs = pd.read_excel('data\\BITFINEXB.xlsx', sheet_name=None, index_col=0)
-XC = ["VIXDiffLag", "const"]
+XC = ["const", "GoogleTrendDiff", "VolumeUSDLogDiff", "ReturnAbsDiff", "SupplyDiff", "CRSPBTCDiff",
+      "CRSPGoldDiff", "VIXDiff"]
 res = pd.DataFrame(columns=XC + ["R", "corr", "mean", "stat", "coint"], index=list(dfs.keys()))
 models = {}
 vars = {}
 for d in dfs:
     #df = pd.read_excel('data\\BITFINEXB.xlsx', sheet_name=name, index_col=0)
     name = d
+    print(name)
     df = dfs[d]
     dfBTC = pd.read_excel('data\\BITFINEXB.xlsx', sheet_name='Bitcoin', index_col=0)
     df = df.join(dfBTC, rsuffix="BTC")
@@ -39,7 +40,6 @@ for d in dfs:
     df = df.join(coins)
     vix = dfVIX.resample("M", label="left", closed="left", loffset=datetime.timedelta(days=1)).mean()
     df = df.join(vix)
-    #df.dropna(inplace=True)
     df["Supply"] = coinsDiff["Coins"]
     df["Size"] = df["Coins"] * df["Close"]
     #df["VolumeUSDMean"] = df["VolumeUSD"].mean()
@@ -48,12 +48,14 @@ for d in dfs:
     df = diff_and_lag(df)
     df = sm.tsa.add_trend(df, trend='ct')
 
+    # Important for GOLD!!!
     qh = df["CRSPGoldDiff"].quantile(0.9)
     ql = df["CRSPGoldDiff"].quantile(0.1)
     df["CRSPGoldDiff"][(df["CRSPGoldDiff"] > qh) | (df["CRSPGoldDiff"] < ql)] = None
     df["CRSPGoldDiff"].fillna(method="ffill", inplace=True)
-    df = df[datetime.datetime(2018, 4, 1):]
-    #df.dropna(inplace=True)
+
+    df = df[datetime.datetime(2018, 3, 1):]  # 3 for btc spread, volume, supply, abs returns, gt 4 for gold spread, vix
+
     y = df["CRSPDiff"]
     X = df[XC]
     model = sm.GLS(y, X, hasconst=True, missing='drop').fit().get_robustcov_results()
